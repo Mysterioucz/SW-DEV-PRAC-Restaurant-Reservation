@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 // GET single reservation
 export async function GET(
-    req: Request,
+    req: NextRequest,
     { params }: { params: { id: string } },
 ) {
     try {
@@ -58,7 +58,7 @@ export async function GET(
 
 // PUT update reservation
 export async function PUT(
-    req: Request,
+    req: NextRequest,
     { params }: { params: { id: string } },
 ) {
     try {
@@ -114,7 +114,7 @@ export async function PUT(
 
 // DELETE reservation
 export async function DELETE(
-    req: Request,
+    req: NextRequest,
     { params }: { params: { id: string } },
 ) {
     try {

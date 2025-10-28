@@ -21,7 +21,7 @@ export async function GET() {
 }
 
 // POST create restaurant (admin only)
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
 

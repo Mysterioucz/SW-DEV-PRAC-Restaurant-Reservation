@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 // GET reservations
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
 
@@ -57,7 +57,7 @@ export async function GET(req: Request) {
     }
 }
 // POST create reservation
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
 
