@@ -6,11 +6,12 @@ import { prisma } from "@/lib/db";
 // GET single restaurant
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } },
+    { params }: { params: Promise<{ id: string }> },
 ) {
     try {
+        const id = (await params).id;
         const restaurant = await prisma.restaurant.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: {
                 reservations: {
                     include: {
@@ -46,10 +47,11 @@ export async function GET(
 // PUT update restaurant (admin only)
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } },
+    { params }: { params: Promise<{ id: string }> },
 ) {
     try {
         const session = await getServerSession(authOptions);
+        const id = (await params).id;
 
         if (!session || session.user.role !== "ADMIN") {
             return NextResponse.json(
@@ -62,7 +64,7 @@ export async function PUT(
             await req.json();
 
         const restaurant = await prisma.restaurant.update({
-            where: { id: params.id },
+            where: { id: id },
             data: {
                 ...(name && { name }),
                 ...(address && { address }),
@@ -85,10 +87,11 @@ export async function PUT(
 // DELETE restaurant (admin only)
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } },
+    { params }: { params: Promise<{ id: string }> },
 ) {
     try {
         const session = await getServerSession(authOptions);
+        const id = (await params).id;
 
         if (!session || session.user.role !== "ADMIN") {
             return NextResponse.json(
@@ -98,7 +101,7 @@ export async function DELETE(
         }
 
         await prisma.restaurant.delete({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         return NextResponse.json({

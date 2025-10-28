@@ -6,10 +6,11 @@ import { prisma } from "@/lib/db";
 // GET single reservation
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } },
+    { params }: { params: Promise<{ id: string }> },
 ) {
     try {
         const session = await getServerSession(authOptions);
+        const id = (await params).id;
 
         if (!session) {
             return NextResponse.json(
@@ -19,7 +20,7 @@ export async function GET(
         }
 
         const reservation = await prisma.reservation.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: {
                 restaurant: true,
                 user: {
@@ -59,11 +60,11 @@ export async function GET(
 // PUT update reservation
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } },
+    { params }: { params: Promise<{ id: string }> },
 ) {
     try {
         const session = await getServerSession(authOptions);
-
+        const id = (await params).id;
         if (!session) {
             return NextResponse.json(
                 { error: "Unauthorized" },
@@ -72,7 +73,7 @@ export async function PUT(
         }
 
         const existing = await prisma.reservation.findUnique({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         if (!existing) {
@@ -92,7 +93,7 @@ export async function PUT(
         const { date, restaurantId } = await req.json();
 
         const reservation = await prisma.reservation.update({
-            where: { id: params.id },
+            where: { id: id },
             data: {
                 ...(date && { date: new Date(date) }),
                 ...(restaurantId && { restaurantId }),
@@ -115,11 +116,11 @@ export async function PUT(
 // DELETE reservation
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } },
+    { params }: { params: Promise<{ id: string }> },
 ) {
     try {
         const session = await getServerSession(authOptions);
-
+        const id = (await params).id;
         if (!session) {
             return NextResponse.json(
                 { error: "Unauthorized" },
@@ -128,7 +129,7 @@ export async function DELETE(
         }
 
         const existing = await prisma.reservation.findUnique({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         if (!existing) {
@@ -146,7 +147,7 @@ export async function DELETE(
         }
 
         await prisma.reservation.delete({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         return NextResponse.json({
