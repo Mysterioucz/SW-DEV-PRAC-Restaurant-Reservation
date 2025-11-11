@@ -101,9 +101,44 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // Validate time within opening hours
+        const reservationDate = new Date(date);
+        if (isNaN(reservationDate.getTime())) {
+            return NextResponse.json(
+                { error: "Invalid date format" },
+                { status: 400 },
+            );
+        }
+
+        const parseTime = (t: string) => {
+            const [h, m] = t.split(":").map(Number);
+            if (Number.isNaN(h) || Number.isNaN(m)) return null;
+            return h * 60 + m;
+        };
+
+        const openMinutes = parseTime(restaurant.openTime);
+        const closeMinutes = parseTime(restaurant.closeTime);
+        if (openMinutes === null || closeMinutes === null) {
+            return NextResponse.json(
+                { error: "Restaurant hours misconfigured" },
+                { status: 500 },
+            );
+        }
+
+        const resMinutes = reservationDate.getHours() * 60 + reservationDate.getMinutes();
+
+        // Simple same-day window (non-overnight). If overnight hours needed, adjust logic.
+        const withinHours = openMinutes <= resMinutes && resMinutes < closeMinutes;
+        if (!withinHours) {
+            return NextResponse.json(
+                { error: `Restaurant operating hours are between ${restaurant.openTime} and ${restaurant.closeTime}` },
+                { status: 400 },
+            );
+        }
+
         const reservation = await prisma.reservation.create({
             data: {
-                date: new Date(date),
+                date: reservationDate,
                 userId: session.user.id,
                 restaurantId,
             },
