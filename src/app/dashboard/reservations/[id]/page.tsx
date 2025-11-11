@@ -33,7 +33,7 @@ export default async function ReservationDetailPage({ params }: { params: Promis
         );
     }
     return (
-        <div className="space-y-6">
+        <div className="w-full mx-auto max-w-6xl space-y-6 px-4 py-8">
             <h1 className="text-2xl font-bold">Reservation Details</h1>
             <div className="space-y-2 rounded-xl border border-gray-200 bg-white p-5">
                 <div>

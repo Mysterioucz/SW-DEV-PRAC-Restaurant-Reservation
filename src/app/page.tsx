@@ -13,7 +13,7 @@ async function getRestaurants(): Promise<Restaurant[]> {
 export default async function Home() {
     const restaurants = await getRestaurants();
     return (
-        <div>
+        <div className="w-full mx-auto max-w-6xl px-4 py-8">
             <section className="mb-8 rounded-2xl bg-indigo-600 px-6 py-10 text-white">
                 <h1 className="text-3xl font-bold">Book your next meal</h1>
                 <p className="mt-2 text-indigo-100">
