@@ -22,7 +22,8 @@ export default function DashboardPage() {
             if (!res.ok) throw new Error(data.error || "Failed to load");
             setReservations(data.data || []);
         } catch (err) {
-            const message = err instanceof Error ? err.message : "Failed to load";
+            const message =
+                err instanceof Error ? err.message : "Failed to load";
             setError(message);
         } finally {
             setLoading(false);
@@ -37,12 +38,15 @@ export default function DashboardPage() {
         setCanceling(id);
         setError("");
         try {
-            const res = await fetch(`/api/reservations/${id}`, { method: "DELETE" });
+            const res = await fetch(`/api/reservations/${id}`, {
+                method: "DELETE",
+            });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Cancel failed");
             await load();
         } catch (err) {
-            const message = err instanceof Error ? err.message : "Cancel failed";
+            const message =
+                err instanceof Error ? err.message : "Cancel failed";
             setError(message);
         } finally {
             setCanceling(null);
@@ -50,10 +54,12 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="w-full mx-auto max-w-6xl space-y-6 px-4 py-8">
             <h1 className="text-2xl font-bold">My Reservations</h1>
             {error && (
-                <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">{error}</div>
+                <div className="rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+                    {error}
+                </div>
             )}
             {loading ? (
                 <div>Loading...</div>
@@ -65,7 +71,9 @@ export default function DashboardPage() {
                             className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between"
                         >
                             <div>
-                                <div className="font-medium">{r.restaurant.name}</div>
+                                <div className="font-medium">
+                                    {r.restaurant.name}
+                                </div>
                                 <div className="text-sm text-gray-600">
                                     {new Date(r.date).toLocaleString()}
                                 </div>
@@ -82,13 +90,17 @@ export default function DashboardPage() {
                                     disabled={canceling === r.id}
                                     className="rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700 disabled:opacity-50"
                                 >
-                                    {canceling === r.id ? "Cancelling..." : "Cancel"}
+                                    {canceling === r.id
+                                        ? "Cancelling..."
+                                        : "Cancel"}
                                 </button>
                             </div>
                         </div>
                     ))}
                     {reservations.length === 0 && (
-                        <div className="rounded-md border border-dashed p-6 text-center text-gray-600">No reservations.</div>
+                        <div className="rounded-md border border-dashed p-6 text-center text-gray-600">
+                            No reservations.
+                        </div>
                     )}
                 </div>
             )}

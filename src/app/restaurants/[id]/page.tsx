@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { getBaseUrl } from "@/lib/baseUrl";
 import ReservationForm from "@/components/ReservationForm";
-import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getBaseUrl } from "@/lib/baseUrl";
+import { getServerSession } from "next-auth";
+import Link from "next/link";
 
 type RestaurantDetail = {
     id: string;
@@ -20,14 +20,20 @@ type RestaurantDetail = {
 
 async function getRestaurant(id: string): Promise<RestaurantDetail | null> {
     const base = getBaseUrl();
-    const res = await fetch(`${base}/api/restaurants/${id}`, { cache: "no-store" });
+    const res = await fetch(`${base}/api/restaurants/${id}`, {
+        cache: "no-store",
+    });
     if (!res.ok) return null;
     const data = await res.json();
     return data.data || null;
 }
 
 // NOTE: In this Next.js version, dynamic route params arrive as a Promise; we must await it.
-export default async function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RestaurantDetailPage({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}) {
     const { id } = await params;
     const session = await getServerSession(authOptions);
     const isAdmin = session?.user?.role === "ADMIN";
@@ -36,12 +42,21 @@ export default async function RestaurantDetailPage({ params }: { params: Promise
         return (
             <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 text-center">
                 <h1 className="text-xl font-semibold">Restaurant not found</h1>
-                <p className="text-gray-600">The restaurant may have been removed or the link is incorrect.</p>
+                <p className="text-gray-600">
+                    The restaurant may have been removed or the link is
+                    incorrect.
+                </p>
                 <div className="flex items-center justify-center gap-2">
-                    <Link href="/restaurants" className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50">
+                    <Link
+                        href="/restaurants"
+                        className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50"
+                    >
                         Back to Restaurants
                     </Link>
-                    <Link href="/" className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700">
+                    <Link
+                        href="/"
+                        className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+                    >
                         Go Home
                     </Link>
                 </div>
@@ -50,11 +65,15 @@ export default async function RestaurantDetailPage({ params }: { params: Promise
     }
 
     return (
-        <div className="space-y-8">
+        <div className="w-full mx-auto max-w-6xl space-y-8 px-4 py-8">
             <header className="space-y-1">
-                <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">
+                    {restaurant.name}
+                </h1>
                 <p className="text-gray-600">{restaurant.address}</p>
-                <p className="text-sm text-gray-500">☎ {restaurant.telephone}</p>
+                <p className="text-sm text-gray-500">
+                    ☎ {restaurant.telephone}
+                </p>
                 <p className="text-sm text-gray-500">
                     Open {restaurant.openTime} – {restaurant.closeTime}
                 </p>
@@ -66,10 +85,14 @@ export default async function RestaurantDetailPage({ params }: { params: Promise
             />
             {isAdmin && (
                 <section>
-                    <h2 className="mb-2 text-lg font-semibold">Upcoming Reservations</h2>
+                    <h2 className="mb-2 text-lg font-semibold">
+                        Upcoming Reservations
+                    </h2>
                     <div className="space-y-2">
                         {restaurant.reservations.length === 0 && (
-                            <p className="text-sm text-gray-600">No reservations yet.</p>
+                            <p className="text-sm text-gray-600">
+                                No reservations yet.
+                            </p>
                         )}
                         {restaurant.reservations.map((r) => (
                             <div
