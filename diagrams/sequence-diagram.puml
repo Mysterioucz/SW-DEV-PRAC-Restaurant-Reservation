@@ -1,0 +1,28 @@
+@startuml
+actor User
+participant "RegisterPage" as RP
+participant "RegisterHandler\n(/api/register)" as RH
+participant "PrismaClient" as PC
+participant "bcrypt" as BC
+database "PostgreSQL" as DB
+
+User -> RP: Fill registration form\n(name, email, phone, password)
+User -> RP: Click "Register"
+RP -> RP: Validate form data
+RP -> RH: POST /api/register\n{name, email, telephone, password}
+RH -> RH: Validate required fields
+RH -> PC: findUnique({email})
+PC -> DB: SELECT * FROM User\nWHERE email = ?
+DB --> PC: null (no existing user)
+PC --> RH: null
+RH -> BC: hash(password, 10)
+BC --> RH: hashedPassword
+RH -> PC: create({name, email,\ntelephone, hashedPassword})
+PC -> DB: INSERT INTO User\nVALUES (...)
+DB --> PC: User record
+PC --> RH: User{id, name, email,\ntelephone, role: USER}
+RH --> RP: 201 Created\n{message, user}
+RP -> RP: Show success message
+RP --> User: Redirect to login page
+
+@enduml
