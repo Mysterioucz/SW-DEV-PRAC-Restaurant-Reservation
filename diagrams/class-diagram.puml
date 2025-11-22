@@ -1,0 +1,232 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+' Domain Models (Prisma Schema)
+class User {
+  - id: String {PK}
+  - name: String
+  - email: String {unique}
+  - telephone: String
+  - password: String
+  - role: Role
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + getReservations(): Reservation[]
+  + canMakeReservation(): boolean
+}
+
+class Restaurant {
+  - id: String {PK}
+  - name: String
+  - address: String
+  - telephone: String
+  - openTime: String
+  - closeTime: String
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + getReservations(): Reservation[]
+  + isWithinOperatingHours(time: DateTime): boolean
+}
+
+class Reservation {
+  - id: String {PK}
+  - date: DateTime
+  - userId: String {FK}
+  - restaurantId: String {FK}
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + getUser(): User
+  + getRestaurant(): Restaurant
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+' API Route Handlers
+class AuthHandler {
+  + GET(request: NextRequest): Promise<NextResponse>
+  + POST(request: NextRequest): Promise<NextResponse>
+}
+
+class RegisterHandler {
+  + POST(request: NextRequest): Promise<NextResponse>
+  - validateRegistrationData(data: any): boolean
+  - hashPassword(password: string): string
+}
+
+class RestaurantHandler {
+  + GET(request: NextRequest): Promise<NextResponse>
+  + POST(request: NextRequest): Promise<NextResponse>
+}
+
+class RestaurantByIdHandler {
+  + GET(request: NextRequest, params: any): Promise<NextResponse>
+  + PUT(request: NextRequest, params: any): Promise<NextResponse>
+  + DELETE(request: NextRequest, params: any): Promise<NextResponse>
+}
+
+class ReservationHandler {
+  + GET(request: NextRequest): Promise<NextResponse>
+  + POST(request: NextRequest): Promise<NextResponse>
+  - validateReservationLimit(userId: string): Promise<boolean>
+  - validateOperatingHours(restaurantId: string, date: DateTime): Promise<boolean>
+}
+
+class ReservationByIdHandler {
+  + GET(request: NextRequest, params: any): Promise<NextResponse>
+  + PUT(request: NextRequest, params: any): Promise<NextResponse>
+  + DELETE(request: NextRequest, params: any): Promise<NextResponse>
+  - checkOwnership(reservationId: string, userId: string): Promise<boolean>
+}
+
+' Authentication & Authorization
+class AuthOptions {
+  - adapter: PrismaAdapter
+  - session: SessionStrategy
+  - providers: Provider[]
+  - callbacks: Callbacks
+  --
+  + authorize(credentials: Credentials): Promise<User>
+  + jwt(token: JWT, user: User): Promise<JWT>
+  + session(session: Session, token: JWT): Promise<Session>
+}
+
+class Middleware {
+  + middleware(request: NextRequest): NextResponse
+  - checkAuth(token: JWT): boolean
+  - checkAdminRole(token: JWT): boolean
+}
+
+' Database Layer
+class PrismaClient {
+  + user: UserDelegate
+  + restaurant: RestaurantDelegate
+  + reservation: ReservationDelegate
+  --
+  + connect(): Promise<void>
+  + disconnect(): Promise<void>
+}
+
+' React Components
+class Navbar {
+  - session: Session
+  --
+  + render(): JSX.Element
+}
+
+class RestaurantCard {
+  - restaurant: Restaurant
+  --
+  + render(): JSX.Element
+}
+
+class ReservationForm {
+  - restaurantId: string
+  - onSubmit: Function
+  --
+  + handleSubmit(data: FormData): void
+  + validateForm(data: FormData): boolean
+  + render(): JSX.Element
+}
+
+class Providers {
+  - children: ReactNode
+  --
+  + render(): JSX.Element
+}
+
+' Page Components
+class DashboardPage {
+  - session: Session
+  - reservations: Reservation[]
+  --
+  + fetchReservations(): Promise<void>
+  + render(): JSX.Element
+}
+
+class RestaurantsPage {
+  - restaurants: Restaurant[]
+  --
+  + fetchRestaurants(): Promise<void>
+  + render(): JSX.Element
+}
+
+class AdminPage {
+  - session: Session
+  - restaurants: Restaurant[]
+  - reservations: Reservation[]
+  --
+  + fetchData(): Promise<void>
+  + render(): JSX.Element
+}
+
+class LoginPage {
+  + handleLogin(credentials: Credentials): Promise<void>
+  + render(): JSX.Element
+}
+
+class RegisterPage {
+  + handleRegister(userData: UserData): Promise<void>
+  + render(): JSX.Element
+}
+
+' Relationships
+
+' Domain Model Relationships
+User "1" -- "0..*" Reservation : creates >
+Restaurant "1" -- "0..*" Reservation : has >
+User -- Role : has >
+
+' API Handlers use Domain Models
+AuthHandler ..> User : uses
+RegisterHandler ..> User : creates
+RestaurantHandler ..> Restaurant : manages
+RestaurantByIdHandler ..> Restaurant : manages
+ReservationHandler ..> Reservation : manages
+ReservationHandler ..> Restaurant : validates
+ReservationHandler ..> User : validates
+ReservationByIdHandler ..> Reservation : manages
+
+' Authentication
+AuthOptions ..> User : authenticates
+AuthOptions ..> PrismaClient : uses
+Middleware ..> AuthOptions : uses
+
+' Database Layer
+PrismaClient ..> User : CRUD
+PrismaClient ..> Restaurant : CRUD
+PrismaClient ..> Reservation : CRUD
+
+' API Handlers use Database
+RestaurantHandler ..> PrismaClient : uses
+RestaurantByIdHandler ..> PrismaClient : uses
+ReservationHandler ..> PrismaClient : uses
+ReservationByIdHandler ..> PrismaClient : uses
+RegisterHandler ..> PrismaClient : uses
+
+' Components use Domain Models
+RestaurantCard ..> Restaurant : displays
+ReservationForm ..> Reservation : creates
+Navbar ..> User : displays
+
+' Pages use Components
+DashboardPage ..> ReservationForm : contains
+DashboardPage ..> Navbar : contains
+RestaurantsPage ..> RestaurantCard : contains
+RestaurantsPage ..> Navbar : contains
+AdminPage ..> Navbar : contains
+LoginPage ..> AuthHandler : calls
+RegisterPage ..> RegisterHandler : calls
+
+' Pages use Domain Models
+DashboardPage ..> Reservation : displays
+RestaurantsPage ..> Restaurant : displays
+AdminPage ..> Restaurant : manages
+AdminPage ..> Reservation : manages
+
+@enduml

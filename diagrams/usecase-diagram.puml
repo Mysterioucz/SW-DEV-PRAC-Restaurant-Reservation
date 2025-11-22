@@ -1,0 +1,67 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Guest
+actor User
+actor Admin
+
+rectangle "Restaurant Reservation System" {
+  ' Guest Use Cases
+  usecase (Register Account) as UC1
+  usecase (Login) as UC2
+  usecase (View Restaurants) as UC3
+  
+  ' User Use Cases
+  usecase (View Restaurant Details) as UC4
+  usecase (Make Reservation) as UC5
+  usecase (View My Reservations) as UC6
+  usecase (Update Reservation) as UC7
+  usecase (Cancel Reservation) as UC8
+  usecase (Logout) as UC9
+  
+  ' Admin Use Cases
+  usecase (Create Restaurant) as UC10
+  usecase (Update Restaurant) as UC11
+  usecase (Delete Restaurant) as UC12
+  usecase (View All Reservations) as UC13
+  usecase (Manage User Reservations) as UC14
+}
+
+' Guest relationships
+Guest --> UC1
+Guest --> UC2
+Guest --> UC3
+
+' User relationships
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+
+' Admin relationships (inherits User capabilities)
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+Admin --> UC12
+Admin --> UC13
+Admin --> UC14
+
+' Include relationships
+UC5 ..> UC4 : <<include>>
+UC7 ..> UC4 : <<include>>
+
+' Extend relationships
+UC5 ..> (Validate Opening Hours) : <<extend>>
+UC5 ..> (Check Reservation Limit) : <<extend>>
+
+@enduml
