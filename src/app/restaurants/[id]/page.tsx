@@ -28,7 +28,6 @@ async function getRestaurant(id: string): Promise<RestaurantDetail | null> {
     return data.data || null;
 }
 
-// NOTE: In this Next.js version, dynamic route params arrive as a Promise; we must await it.
 export default async function RestaurantDetailPage({
     params,
 }: {
@@ -113,12 +112,3 @@ export default async function RestaurantDetailPage({
         </div>
     );
 }
-
-// Client component for reservation form
-// We keep this in the same file; Next can't mix client/server in one file without a separate boundary.
-// So we move the client component to a separate file to satisfy the directive.
-// (Simpler: inline but mark component as client via a separate file.)
-// For now, leave here but add the directive at the top of the file for entire file.
-// NOTE: To avoid lint error we will extract the client component to a new file.
-
-// NOTE: ReservationForm was here; moved to a dedicated client component file for proper Next.js separation.

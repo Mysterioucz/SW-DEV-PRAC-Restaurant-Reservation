@@ -21,7 +21,6 @@ async function getReservation(id: string): Promise<ReservationDetail | null> {
     return data.data || null;
 }
 
-// Align with dynamic param Promise behavior similar to restaurants/[id]
 export default async function ReservationDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const reservation = await getReservation(id);

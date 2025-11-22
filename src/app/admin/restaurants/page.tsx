@@ -92,7 +92,7 @@ export default function AdminRestaurantsPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col p-8 gap-6">
             <h1 className="text-2xl font-bold">Manage Restaurants</h1>
             <form onSubmit={createRestaurant} className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-5">
                 <input

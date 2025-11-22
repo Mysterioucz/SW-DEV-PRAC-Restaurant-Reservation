@@ -18,7 +18,6 @@ async function getRestaurants(query?: string): Promise<Restaurant[]> {
     return list;
 }
 
-// In this Next version, searchParams may be a Promise
 export default async function RestaurantsPage({
     searchParams,
 }: {
