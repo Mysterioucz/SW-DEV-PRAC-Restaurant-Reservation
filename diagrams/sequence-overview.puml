@@ -1,0 +1,150 @@
+@startuml
+title Restaurant Reservation System - API Endpoints Overview
+
+skinparam rectangle {
+    BackgroundColor<<auth>> LightBlue
+    BackgroundColor<<restaurant>> LightGreen
+    BackgroundColor<<reservation>> LightYellow
+}
+
+rectangle "Authentication Service" <<auth>> {
+    rectangle "POST /api/register" as register #LightBlue
+    note right of register
+        • Register new user
+        • Validate email uniqueness
+        • Hash password
+        • Return user object
+    end note
+
+    rectangle "POST /api/auth/login" as login #LightBlue
+    note right of login
+        • Authenticate user
+        • Validate credentials
+        • Generate JWT token
+        • Return session
+    end note
+
+    rectangle "GET /api/auth/logout" as logout #LightBlue
+    note right of logout
+        • Invalidate session
+        • Clear cookies
+        • Destroy JWT token
+    end note
+}
+
+rectangle "Restaurant Service" <<restaurant>> {
+    rectangle "GET /api/restaurants" as getRestaurants #LightGreen
+    note right of getRestaurants
+        • Public access
+        • List all restaurants
+        • Ordered by name
+    end note
+
+    rectangle "GET /api/restaurants/{id}" as getRestaurant #LightGreen
+    note right of getRestaurant
+        • Public access
+        • Get restaurant details
+        • Include reservations
+    end note
+
+    rectangle "POST /api/restaurants" as createRestaurant #LightGreen
+    note right of createRestaurant
+        • Admin only
+        • Create new restaurant
+        • Validate required fields
+    end note
+
+    rectangle "PUT /api/restaurants/{id}" as updateRestaurant #LightGreen
+    note right of updateRestaurant
+        • Admin only
+        • Update restaurant info
+    end note
+
+    rectangle "DELETE /api/restaurants/{id}" as deleteRestaurant #LightGreen
+    note right of deleteRestaurant
+        • Admin only
+        • Delete restaurant
+    end note
+}
+
+rectangle "Reservation Service" <<reservation>> {
+    rectangle "GET /api/reservations" as getReservations #LightYellow
+    note right of getReservations
+        • Authenticated users
+        • Users: own reservations
+        • Admin: all reservations
+    end note
+
+    rectangle "GET /api/reservations/{id}" as getReservation #LightYellow
+    note right of getReservation
+        • Owner or Admin
+        • Get reservation details
+    end note
+
+    rectangle "POST /api/reservations" as createReservation #LightYellow
+    note right of createReservation
+        • Authenticated users
+        • Max 3 per user
+        • Validate operating hours
+        • Check restaurant exists
+    end note
+
+    rectangle "PUT /api/reservations/{id}" as updateReservation #LightYellow
+    note right of updateReservation
+        • Owner or Admin
+        • Update date/restaurant
+    end note
+
+    rectangle "DELETE /api/reservations/{id}" as deleteReservation #LightYellow
+    note right of deleteReservation
+        • Owner or Admin
+        • Cancel reservation
+    end note
+}
+
+actor Guest
+actor "Registered User" as User
+actor Admin
+
+Guest --> register
+Guest --> login
+Guest --> getRestaurants
+Guest --> getRestaurant
+
+User --> login
+User --> logout
+User --> getRestaurants
+User --> getRestaurant
+User --> getReservations
+User --> getReservation
+User --> createReservation
+User --> updateReservation
+User --> deleteReservation
+
+Admin --> login
+Admin --> logout
+Admin --> getRestaurants
+Admin --> getRestaurant
+Admin --> createRestaurant
+Admin --> updateRestaurant
+Admin --> deleteRestaurant
+Admin --> getReservations
+Admin --> getReservation
+Admin --> createReservation
+Admin --> updateReservation
+Admin --> deleteReservation
+
+legend right
+    |= Access Level |= Description |
+    | Public | No authentication required |
+    | Authenticated | Requires valid session |
+    | Admin | Requires ADMIN role |
+    | Owner or Admin | User must own resource or be admin |
+
+    |= Business Rules |
+    | Max Reservations | 3 per user |
+    | Operating Hours | Must be within restaurant hours |
+    | Email Uniqueness | Each email can register once |
+endlegend
+
+@enduml

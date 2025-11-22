@@ -1,0 +1,47 @@
+@startuml
+title Auth Flow: POST /api/auth/login
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nauth" as Router
+participant "<<controller>>\nauth" as Controller
+participant "<<model>>\nUser" as Model
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: POST /api/auth/login
+Server -> Router: router.post('/auth/login', login)
+Router -> Controller: login(req, res)
+Controller -> Controller: extract email, password
+
+alt [missing email or password]
+    Controller --> Client: 400 Bad Request { success:false, msg:"Please provide email and password" }
+    note right: [continue]
+end
+
+Controller -> Model: User.findOne({ email }).select('+password')
+Model -> DB: query user by email
+DB --> Model: user or null
+Model --> Controller: user or null
+
+alt [user not found]
+    Controller --> Client: 400 Bad Request { success:false, msg:"Invalid credentials" }
+    note right: [continue]
+end
+
+Controller -> Controller: user.matchPassword(password)
+Controller -> Controller: compare hashed password
+note right of Controller: bcrypt.compare()
+Controller --> Controller: isMatch
+
+alt [invalid password]
+    Controller --> Client: 401 Unauthorized { success:false, msg:"Invalid credentials" }
+    note right: [continue]
+end
+
+Controller -> Controller: user.getSignedJwtToken()
+note right of Controller: jwt.sign()
+Controller --> Controller: token
+
+Controller --> Client: 200 OK { success:true, token }
+
+@enduml

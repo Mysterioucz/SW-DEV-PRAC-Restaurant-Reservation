@@ -1,0 +1,43 @@
+@startuml
+title Restaurant Flow: DELETE /api/restaurants/{id}
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nrestaurants" as Router
+participant "<<middleware>>\nauth" as Auth
+participant "<<controller>>\nrestaurants" as Controller
+participant "<<model>>\nRestaurant" as Model
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: DELETE /api/restaurants/{id}
+Server -> Router: router.delete('/restaurants/{id}', deleteRestaurant)
+Router -> Auth: getServerSession(authOptions)
+Auth -> Auth: verify JWT token
+
+alt [no session]
+    Auth --> Client: 401 Unauthorized { error:"Unauthorized" }
+    note right: [continue]
+end
+
+alt [user role is not ADMIN]
+    Auth --> Client: 403 Forbidden { error:"Unauthorized - Admin access required" }
+    note right: [continue]
+end
+
+Auth --> Router: session { user: { id, email, role: ADMIN } }
+Router -> Controller: deleteRestaurant(req, res)
+Controller -> Controller: extract id from params
+
+Controller -> Model: Restaurant.delete({ where: { id } })
+Model -> DB: DELETE FROM Restaurant\nWHERE id = ?
+DB --> Model: success or error
+Model --> Controller: success
+
+alt [restaurant not found]
+    Controller --> Client: 404 Not Found { error:"Restaurant not found" }
+    note right: [continue]
+end
+
+Controller --> Client: 200 OK { success:true, message:"Restaurant deleted successfully" }
+
+@enduml

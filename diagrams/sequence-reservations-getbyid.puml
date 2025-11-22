@@ -1,0 +1,47 @@
+@startuml
+title Reservation Flow: GET /api/reservations/{id}
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nreservations" as Router
+participant "<<middleware>>\nauth" as Auth
+participant "<<controller>>\nreservations" as Controller
+participant "<<model>>\nReservation" as Model
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: GET /api/reservations/{id}
+Server -> Router: router.get('/reservations/{id}', getReservationById)
+Router -> Auth: getServerSession(authOptions)
+Auth -> Auth: verify JWT token
+
+alt [no session]
+    Auth --> Client: 401 Unauthorized { error:"Unauthorized" }
+    note right: [continue]
+end
+
+Auth --> Router: session { user: { id, email, role } }
+Router -> Controller: getReservationById(req, res)
+Controller -> Controller: extract id from params
+
+Controller -> Model: Reservation.findUnique({ where: { id }, include: { restaurant, user } })
+Model -> DB: SELECT * FROM Reservation\nWHERE id = ?\nJOIN Restaurant\nJOIN User
+DB --> Model: reservation or null
+Model --> Controller: reservation or null
+
+alt [reservation not found]
+    Controller --> Client: 404 Not Found { error:"Reservation not found" }
+    note right: [continue]
+end
+
+Controller -> Controller: check if user is ADMIN or owner
+Controller -> Controller: isAdmin = (session.user.role === 'ADMIN')
+Controller -> Controller: isOwner = (reservation.userId === session.user.id)
+
+alt [not admin and not owner]
+    Controller --> Client: 403 Forbidden { error:"Forbidden" }
+    note right: [continue]
+end
+
+Controller --> Client: 200 OK { success:true, data: reservation }
+
+@enduml

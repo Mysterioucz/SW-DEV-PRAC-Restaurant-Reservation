@@ -1,0 +1,44 @@
+@startuml
+title Restaurant Flow: POST /api/restaurants
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nrestaurants" as Router
+participant "<<middleware>>\nauth" as Auth
+participant "<<controller>>\nrestaurants" as Controller
+participant "<<model>>\nRestaurant" as Model
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: POST /api/restaurants
+Server -> Router: router.post('/restaurants', createRestaurant)
+Router -> Auth: getServerSession(authOptions)
+Auth -> Auth: verify JWT token
+
+alt [no session]
+    Auth --> Client: 401 Unauthorized { error:"Unauthorized" }
+    note right: [continue]
+end
+
+alt [user role is not ADMIN]
+    Auth --> Client: 403 Forbidden { error:"Unauthorized - Admin access required" }
+    note right: [continue]
+end
+
+Auth --> Router: session { user: { id, email, role: ADMIN } }
+Router -> Controller: createRestaurant(req, res)
+Controller -> Controller: extract name, address, telephone, openTime, closeTime
+
+alt [missing required fields]
+    Controller --> Client: 400 Bad Request { error:"Missing required fields" }
+    note right: [continue]
+end
+
+Controller -> Model: Restaurant.create({ name, address, telephone, openTime, closeTime })
+Model -> DB: INSERT INTO Restaurant\nVALUES (name, address, telephone, openTime, closeTime)
+DB --> Model: restaurant record
+Model --> Controller: restaurant
+
+Controller --> Client: 201 Created { success:true, data: restaurant }
+note right of Controller: Restaurant info includes\nname, address, telephone,\nlocation (State/City),\nopenTime, closeTime
+
+@enduml

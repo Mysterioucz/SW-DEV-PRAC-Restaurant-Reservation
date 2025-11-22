@@ -2,14 +2,13 @@
 title Auth Flow: POST /api/register
 
 participant "Client" as Client
-participant "<<Next.js>>\nserver" as Server
+participant "<<Node.js>>\nserver" as Server
 participant "<<router>>\nregister" as Router
 participant "<<controller>>\nregister" as Controller
 participant "<<model>>\nUser" as Model
-participant "<<bcrypt>>\nhashing" as Bcrypt
 database "<<Database>>\nPostgreSQL" as DB
 
-Client -> Server: POST /api/register\n{name, email, telephone, password}
+Client -> Server: POST /api/register
 Server -> Router: router.post('/register', register)
 Router -> Controller: register(req, res)
 Controller -> Controller: extract name, email, telephone, password
@@ -19,8 +18,8 @@ alt [missing required fields]
     note right: [continue]
 end
 
-Controller -> Model: User.findUnique({ where: { email } })
-Model -> DB: SELECT * FROM User\nWHERE email = ?
+Controller -> Model: User.findUnique({ email })
+Model -> DB: SELECT * FROM User WHERE email = ?
 DB --> Model: user or null
 Model --> Controller: existingUser or null
 
@@ -29,18 +28,15 @@ alt [email already registered]
     note right: [continue]
 end
 
-Controller -> Bcrypt: bcrypt.hash(password, 10)
+Controller -> Controller: bcrypt.hash(password, 10)
 note right of Controller: hash password with salt rounds
-Bcrypt --> Controller: hashedPassword
+Controller --> Controller: hashedPassword
 
 Controller -> Model: User.create({ name, email, telephone, hashedPassword })
-Model -> DB: INSERT INTO User\nVALUES (name, email, telephone, hashedPassword, role: USER)
+Model -> DB: INSERT INTO User VALUES (...)
 DB --> Model: user record
 Model --> Controller: user { id, name, email, telephone, role }
 
 Controller --> Client: 201 Created { message:"User registered successfully", user }
-
-Client -> Client: Show success message
-Client -> Client: Redirect to login page
 
 @enduml

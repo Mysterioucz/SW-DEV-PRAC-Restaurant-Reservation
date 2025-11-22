@@ -1,67 +1,95 @@
 @startuml
 left to right direction
-skinparam packageStyle rectangle
+title Restaurant Reservation System
 
+' Define actors
 actor Guest
-actor User
+actor "Registered User" as User
 actor Admin
 
-rectangle "Restaurant Reservation System" {
-  ' Guest Use Cases
-  usecase (Register Account) as UC1
-  usecase (Login) as UC2
-  usecase (View Restaurants) as UC3
-  
-  ' User Use Cases
-  usecase (View Restaurant Details) as UC4
-  usecase (Make Reservation) as UC5
-  usecase (View My Reservations) as UC6
-  usecase (Update Reservation) as UC7
-  usecase (Cancel Reservation) as UC8
-  usecase (Logout) as UC9
-  
-  ' Admin Use Cases
-  usecase (Create Restaurant) as UC10
-  usecase (Update Restaurant) as UC11
-  usecase (Delete Restaurant) as UC12
-  usecase (View All Reservations) as UC13
-  usecase (Manage User Reservations) as UC14
+' Service boxes
+package "Service" {
+
+  rectangle "Auth" {
+    usecase (Login\nPOST /api/auth/login) as Login
+    usecase (Register\nPOST /api/register) as Register
+    usecase (Logout\nGET /api/auth/logout) as Logout
+  }
+
+  rectangle "Restaurants" {
+    usecase (View All Restaurants\nGET /api/restaurants) as ViewRestaurants
+    usecase (View Restaurant Detail\nGET /api/restaurants/{id}) as ViewRestaurantDetail
+    usecase (Create Restaurant\nPOST /api/restaurants) as CreateRestaurant
+    usecase (Edit Restaurant\nPUT /api/restaurants/{id}) as EditRestaurant
+    usecase (Delete Restaurant\nDELETE /api/restaurants/{id}) as DeleteRestaurant
+  }
+
+  rectangle "Reservations" {
+    usecase (View Own Reservations\nGET /api/reservations) as ViewOwnReservations
+    usecase (View Reservation Detail\nGET /api/reservations/{id}) as ViewReservationDetail
+    usecase (Make Reservation\nPOST /api/reservations) as MakeReservation
+    usecase (Edit Own Reservation\nPUT /api/reservations/{id}) as EditOwnReservation
+    usecase (Cancel Own Reservation\nDELETE /api/reservations/{id}) as CancelOwnReservation
+    usecase (View All Reservations\nGET /api/reservations) as ViewAllReservations
+    usecase (Edit Any Reservation\nPUT /api/reservations/{id}) as EditAnyReservation
+    usecase (Cancel Any Reservation\nDELETE /api/reservations/{id}) as CancelAnyReservation
+  }
 }
 
+' Notes
+note right of MakeReservation
+  Limited to 3 reservations per user
+  Must be within restaurant
+  operating hours
+end note
+
+note right of ViewRestaurants
+  Public access
+  No authentication required
+end note
+
+note right of CreateRestaurant
+  Admin only
+  Restaurant info includes
+  name, address, telephone,
+  opening hours
+end note
+
 ' Guest relationships
-Guest --> UC1
-Guest --> UC2
-Guest --> UC3
+Guest --> Register
+Guest --> Login
+Guest --> ViewRestaurants
 
 ' User relationships
-User --> UC3
-User --> UC4
-User --> UC5
-User --> UC6
-User --> UC7
-User --> UC8
-User --> UC9
+User --> Login
+User --> Logout
+User --> ViewRestaurants
+User --> ViewRestaurantDetail
+User --> MakeReservation
+User --> ViewOwnReservations
+User --> ViewReservationDetail
+User --> EditOwnReservation
+User --> CancelOwnReservation
 
-' Admin relationships (inherits User capabilities)
-Admin --> UC3
-Admin --> UC4
-Admin --> UC5
-Admin --> UC6
-Admin --> UC7
-Admin --> UC8
-Admin --> UC9
-Admin --> UC10
-Admin --> UC11
-Admin --> UC12
-Admin --> UC13
-Admin --> UC14
+' Admin relationships
+Admin --> Login
+Admin --> Logout
+Admin --> ViewRestaurants
+Admin --> ViewRestaurantDetail
+Admin --> CreateRestaurant
+Admin --> EditRestaurant
+Admin --> DeleteRestaurant
+Admin --> MakeReservation
+Admin --> ViewOwnReservations
+Admin --> ViewReservationDetail
+Admin --> EditOwnReservation
+Admin --> CancelOwnReservation
+Admin --> ViewAllReservations
+Admin --> EditAnyReservation
+Admin --> CancelAnyReservation
 
 ' Include relationships
-UC5 ..> UC4 : <<include>>
-UC7 ..> UC4 : <<include>>
-
-' Extend relationships
-UC5 ..> (Validate Opening Hours) : <<extend>>
-UC5 ..> (Check Reservation Limit) : <<extend>>
+MakeReservation ..> ViewRestaurantDetail : <<include>>
+EditOwnReservation ..> ViewReservationDetail : <<include>>
 
 @enduml
