@@ -1,0 +1,35 @@
+@startuml
+title Auth Flow: GET /api/auth/logout
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nauth" as Router
+participant "<<middleware>>\nauth" as Auth
+participant "<<controller>>\nauth" as Controller
+
+Client -> Server: GET /api/auth/logout
+note right of Client: User clicks logout button
+Server -> Router: router.get('/auth/logout', logout)
+Router -> Auth: getServerSession(authOptions)
+Auth -> Auth: verify JWT token
+
+alt [no session]
+    Auth --> Client: 401 Unauthorized { error:"Unauthorized" }
+    note right: [continue]
+end
+
+Auth --> Router: session { user: { id, email, role } }
+Router -> Controller: logout(req, res)
+
+Controller -> Controller: invalidate JWT token
+note right of Controller: NextAuth handles\ntoken invalidation\nand session cleanup
+
+Controller -> Controller: clear session cookie
+Controller -> Controller: destroy server session
+
+Controller --> Client: 200 OK { success:true, message:"Logged out successfully" }
+
+Client -> Client: Clear local storage/cookies
+Client -> Client: Redirect to home page
+
+@enduml

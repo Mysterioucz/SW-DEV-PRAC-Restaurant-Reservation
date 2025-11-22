@@ -1,0 +1,43 @@
+@startuml
+title Reservation Flow: GET /api/reservations
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nreservations" as Router
+participant "<<middleware>>\nauth" as Auth
+participant "<<controller>>\nreservations" as Controller
+participant "<<model>>\nReservation" as Model
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: GET /api/reservations
+Server -> Router: router.get('/reservations', getReservations)
+Router -> Auth: getServerSession(authOptions)
+Auth -> Auth: verify JWT token
+
+alt [no session]
+    Auth --> Client: 401 Unauthorized { error:"Unauthorized" }
+    note right: [continue]
+end
+
+Auth --> Router: session { user: { id, email, role } }
+Router -> Controller: getReservations(req, res)
+Controller -> Controller: check if user is ADMIN
+Controller -> Controller: extract userId from query params
+
+alt [user is ADMIN and no userId]
+    Controller -> Model: Reservation.findMany({ include: { restaurant, user }, orderBy: { date: 'asc' } })
+    Model -> DB: SELECT * FROM Reservation\nJOIN Restaurant\nJOIN User\nORDER BY date ASC
+    DB --> Model: all reservations
+    Model --> Controller: reservations
+    note right of Controller: Admin can view\nall reservations
+else [regular user or specific userId]
+    Controller -> Model: Reservation.findMany({ where: { userId }, include: { restaurant }, orderBy: { date: 'asc' } })
+    Model -> DB: SELECT * FROM Reservation\nWHERE userId = ?\nJOIN Restaurant\nORDER BY date ASC
+    DB --> Model: user's reservations
+    Model --> Controller: reservations
+    note right of Controller: Users can only view\ntheir own reservations
+end
+
+Controller --> Client: 200 OK { success:true, data: reservations }
+
+@enduml

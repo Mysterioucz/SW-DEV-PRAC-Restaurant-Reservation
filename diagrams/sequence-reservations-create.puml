@@ -1,0 +1,79 @@
+@startuml
+title Reservation Flow: POST /api/reservations
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nreservations" as Router
+participant "<<middleware>>\nauth" as Auth
+participant "<<controller>>\nreservations" as Controller
+participant "<<model>>\nReservation" as Model
+participant "<<model>>\nRestaurant" as RestaurantModel
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: POST /api/reservations
+Server -> Router: router.post('/reservations', createReservation)
+Router -> Auth: getServerSession(authOptions)
+Auth -> Auth: verify JWT token
+
+alt [no session]
+    Auth --> Client: 401 Unauthorized { error:"Unauthorized" }
+    note right: [continue]
+end
+
+Auth --> Router: session { user: { id, email, role } }
+Router -> Controller: createReservation(req, res)
+Controller -> Controller: extract date, restaurantId
+
+alt [missing required fields]
+    Controller --> Client: 400 Bad Request { error:"Missing required fields" }
+    note right: [continue]
+end
+
+Controller -> Model: Reservation.count({ where: { userId: session.user.id } })
+Model -> DB: SELECT COUNT(*) FROM Reservation\nWHERE userId = ?
+DB --> Model: count
+Model --> Controller: userReservationsCount
+
+alt [userReservationsCount >= 3]
+    Controller --> Client: 400 Bad Request { error:"Maximum 3 reservations allowed per user" }
+    note right: [continue]
+    note left of Client: Limited to 3 reservations\nper user
+end
+
+Controller -> RestaurantModel: Restaurant.findUnique({ where: { id: restaurantId } })
+RestaurantModel -> DB: SELECT * FROM Restaurant\nWHERE id = ?
+DB --> RestaurantModel: restaurant or null
+RestaurantModel --> Controller: restaurant or null
+
+alt [restaurant not found]
+    Controller --> Client: 404 Not Found { error:"Restaurant not found" }
+    note right: [continue]
+end
+
+Controller -> Controller: validate date format
+Controller -> Controller: reservationDate = new Date(date)
+
+alt [invalid date format]
+    Controller --> Client: 400 Bad Request { error:"Invalid date format" }
+    note right: [continue]
+end
+
+Controller -> Controller: parseTime(restaurant.openTime)
+Controller -> Controller: parseTime(restaurant.closeTime)
+Controller -> Controller: calculate reservation time in minutes
+Controller -> Controller: check if within operating hours
+
+alt [outside operating hours]
+    Controller --> Client: 400 Bad Request { error:"Restaurant operating hours are between X and Y" }
+    note right: [continue]
+    note left of Client: Reservation must be\nbetween restaurant\noperating hours
+end
+
+Controller -> Model: Reservation.create({ date, userId, restaurantId, include: { restaurant } })
+Model -> DB: INSERT INTO Reservation\nVALUES (date, userId, restaurantId)
+DB --> Model: reservation record
+Model --> Controller: reservation with restaurant
+
+Controller --> Client: 201 Created { success:true, data: reservation }
+
+@enduml

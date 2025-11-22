@@ -1,0 +1,23 @@
+@startuml
+title Restaurant Flow: GET /api/restaurants
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nrestaurants" as Router
+participant "<<controller>>\nrestaurants" as Controller
+participant "<<model>>\nRestaurant" as Model
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: GET /api/restaurants
+note right of Client: Public access\nNo authentication required
+Server -> Router: router.get('/restaurants', getRestaurants)
+Router -> Controller: getRestaurants(req, res)
+
+Controller -> Model: Restaurant.findMany({ orderBy: { name: 'asc' } })
+Model -> DB: SELECT * FROM Restaurant\nORDER BY name ASC
+DB --> Model: restaurants array
+Model --> Controller: restaurants
+
+Controller --> Client: 200 OK { success:true, data: restaurants }
+
+@enduml

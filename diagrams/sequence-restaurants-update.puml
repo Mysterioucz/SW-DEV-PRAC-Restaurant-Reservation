@@ -1,0 +1,44 @@
+@startuml
+title Restaurant Flow: PUT /api/restaurants/{id}
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nrestaurants" as Router
+participant "<<middleware>>\nauth" as Auth
+participant "<<controller>>\nrestaurants" as Controller
+participant "<<model>>\nRestaurant" as Model
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: PUT /api/restaurants/{id}
+Server -> Router: router.put('/restaurants/{id}', updateRestaurant)
+Router -> Auth: getServerSession(authOptions)
+Auth -> Auth: verify JWT token
+
+alt [no session]
+    Auth --> Client: 401 Unauthorized { error:"Unauthorized" }
+    note right: [continue]
+end
+
+alt [user role is not ADMIN]
+    Auth --> Client: 403 Forbidden { error:"Unauthorized - Admin access required" }
+    note right: [continue]
+end
+
+Auth --> Router: session { user: { id, email, role: ADMIN } }
+Router -> Controller: updateRestaurant(req, res)
+Controller -> Controller: extract id from params
+Controller -> Controller: extract name, address, telephone, openTime, closeTime
+
+Controller -> Model: Restaurant.update({ where: { id }, data: {...fields} })
+Model -> DB: UPDATE Restaurant\nSET name=?, address=?, telephone=?, openTime=?, closeTime=?\nWHERE id = ?
+DB --> Model: restaurant record or error
+Model --> Controller: restaurant
+
+alt [restaurant not found]
+    Controller --> Client: 404 Not Found { error:"Restaurant not found" }
+    note right: [continue]
+end
+
+Controller --> Client: 200 OK { success:true, data: restaurant }
+
+@enduml

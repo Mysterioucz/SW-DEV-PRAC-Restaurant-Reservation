@@ -1,0 +1,30 @@
+@startuml
+title Restaurant Flow: GET /api/restaurants/{id}
+
+participant "Client" as Client
+participant "<<Node.js>>\nserver" as Server
+participant "<<router>>\nrestaurants" as Router
+participant "<<controller>>\nrestaurants" as Controller
+participant "<<model>>\nRestaurant" as Model
+database "<<Database>>\nPostgreSQL" as DB
+
+Client -> Server: GET /api/restaurants/{id}
+note right of Client: Public access\nIncludes reservations data
+Server -> Router: router.get('/restaurants/{id}', getRestaurantById)
+Router -> Controller: getRestaurantById(req, res)
+Controller -> Controller: extract id from params
+
+Controller -> Model: Restaurant.findUnique({ id, include: { reservations } })
+Model -> DB: SELECT * FROM Restaurant\nWHERE id = ?\nJOIN Reservation
+DB --> Model: restaurant or null
+Model --> Controller: restaurant or null
+
+alt [restaurant not found]
+    Controller --> Client: 404 Not Found { error:"Restaurant not found" }
+    note right: [continue]
+end
+
+Controller --> Client: 200 OK { success:true, data: restaurant }
+note right of Controller: Restaurant includes\nname, address, telephone,\nopenTime, closeTime,\nreservations with user info
+
+@enduml
